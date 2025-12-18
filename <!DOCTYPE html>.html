@@ -2,142 +2,75 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>BitIsland - Mundo Virtual</title>
+    <title>BitIsland - Versão Offline</title>
     <style>
-        body { margin: 0; background: #2c3e50; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
-        
-        /* Interface de Cima */
-        #ui-top { width: 100%; padding: 10px; background: rgba(0,0,0,0.5); color: white; display: flex; justify-content: space-around; z-index: 10; }
-        .stat { font-weight: bold; color: #f1c40f; }
-
-        /* O Mundo do Jogo */
-        #game-container { position: relative; border: 5px solid #34495e; border-radius: 15px; margin-top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); cursor: crosshair; }
-        canvas { background: #81ecec; display: block; border-radius: 10px; }
-
-        /* Chat Boladão */
-        #chat-container { position: absolute; bottom: 20px; left: 20px; width: 300px; background: rgba(255, 255, 255, 0.9); border-radius: 10px; padding: 10px; }
-        #chat-logs { height: 120px; overflow-y: auto; font-size: 14px; margin-bottom: 5px; border-bottom: 1px solid #ccc; }
-        #chat-input { width: 70%; border: none; padding: 5px; border-radius: 5px; }
-        button { background: #2ecc71; border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
-        button:hover { background: #27ae60; }
-
-        /* Inventário Rápido */
-        #wardrobe { position: absolute; top: 20px; right: 20px; background: white; padding: 10px; border-radius: 10px; }
+        body { margin: 0; background: #2c3e50; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+        #game-container { position: relative; margin-top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        canvas { background: #81ecec; display: block; border-radius: 10px; cursor: crosshair; border: 5px solid #34495e; }
+        .ui { position: absolute; top: 10px; left: 10px; color: #2c3e50; font-weight: bold; background: rgba(255,255,255,0.7); padding: 10px; border-radius: 5px; pointer-events: none; }
     </style>
 </head>
 <body>
 
-    <div id="ui-top">
-        <div>📍 Local: <span class="stat">Praia Bit</span></div>
-        <div>💰 Moedas: <span id="coins" class="stat">100</span></div>
-        <div>🐧 Jogadores Online: <span class="stat">1 (Você)</span></div>
-    </div>
+    <h2 style="color: white;">🐧 BitIsland Alpha (Clique para andar!)</h2>
 
     <div id="game-container">
+        <div class="ui">💰 Moedas: <span id="coins">100</span></div>
         <canvas id="world" width="800" height="500"></canvas>
-        
-        <div id="chat-container">
-            <div id="chat-logs"><b>Sistema:</b> Bem-vindo à BitIsland! Clique para andar.</div>
-            <input type="text" id="chat-input" placeholder="Manda o papo...">
-            <button onclick="sendMessage()">Enviar</button>
-        </div>
-
-        <div id="wardrobe">
-            <p style="margin:0; font-size:12px; font-weight:bold;">Mudar Cor:</p>
-            <input type="color" id="colorPicker" value="#ff7675" onchange="updateColor()">
-        </div>
     </div>
 
     <script>
+        // O ManoBit limpou as dependências de rede pra não dar tela branca!
         const canvas = document.getElementById('world');
         const ctx = canvas.getContext('2d');
-        const chatLogs = document.getElementById('chat-logs');
         const coinDisplay = document.getElementById('coins');
         
-        // Dados do Jogador (O Amicritter)
         let player = {
-            x: 400,
-            y: 250,
-            targetX: 400,
-            targetY: 250,
+            x: 400, y: 250,
+            targetX: 400, targetY: 250,
             speed: 0.1,
             color: '#ff7675',
-            coins: 100,
-            size: 25
+            coins: 100
         };
 
-        // Sistema de Moedas (Ganhe moedas andando!)
-        function addCoins(amount) {
-            player.coins += amount;
-            coinDisplay.innerText = player.coins;
-        }
-
-        // Clique para mover
         canvas.addEventListener('mousedown', (e) => {
             const rect = canvas.getBoundingClientRect();
             player.targetX = e.clientX - rect.left;
             player.targetY = e.clientY - rect.top;
-            
-            // Simula ganhar 1 moeda por rolê
-            addCoins(1);
+            player.coins += 5;
+            coinDisplay.innerText = player.coins;
         });
 
-        function updateColor() {
-            player.color = document.getElementById('colorPicker').value;
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('chat-input');
-            if (input.value.trim() !== "") {
-                chatLogs.innerHTML += `<div><b>Você:</b> ${input.value}</div>`;
-                chatLogs.scrollTop = chatLogs.scrollHeight;
-                input.value = "";
-            }
-        }
-
-        // Desenhar o cenário (Areia e Água)
-        function drawMap() {
-            ctx.fillStyle = "#81ecec"; // Água
+        function draw() {
+            // Limpa o frame
+            ctx.fillStyle = "#81ecec"; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#ffeaa7"; // Areia
+            
+            // Desenha o chão (Areia)
+            ctx.fillStyle = "#ffeaa7";
             ctx.fillRect(0, 350, canvas.width, 150);
-        }
 
-        // Loop de animação
-        function update() {
-            // Suavizar movimento (Lerp)
+            // Suaviza movimento
             player.x += (player.targetX - player.x) * player.speed;
             player.y += (player.targetY - player.y) * player.speed;
 
-            drawMap();
-
-            // Desenhar Personagem (O "Pinguim" Bit)
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+            // Desenha o Boneco
             ctx.fillStyle = player.color;
-            ctx.fill();
-            ctx.strokeStyle = "white";
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            ctx.closePath();
-
-            // Olhinhos (expressão)
-            ctx.fillStyle = "white";
             ctx.beginPath();
-            ctx.arc(player.x - 8, player.y - 5, 5, 0, Math.PI * 2);
-            ctx.arc(player.x + 8, player.y - 5, 5, 0, Math.PI * 2);
+            ctx.arc(player.x, player.y, 20, 0, Math.PI * 2);
             ctx.fill();
-            
+            ctx.stroke();
+
+            // Olhinhos
             ctx.fillStyle = "black";
             ctx.beginPath();
-            ctx.arc(player.x - 8, player.y - 5, 2, 0, Math.PI * 2);
-            ctx.arc(player.x + 8, player.y - 5, 2, 0, Math.PI * 2);
+            ctx.arc(player.x - 7, player.y - 5, 2, 0, Math.PI * 2);
+            ctx.arc(player.x + 7, player.y - 5, 2, 0, Math.PI * 2);
             ctx.fill();
 
-            requestAnimationFrame(update);
+            requestAnimationFrame(draw);
         }
-
-        update();
+        draw();
     </script>
 </body>
 </html>
